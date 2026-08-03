@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 interface ModalRegistroMovilProps {
   isOpen: boolean;
   onClose: () => void;
-  onGastoAgregado: () => void;
+  onGastoAgregado: () => void; // <-- Mantenemos este nombre que usa VistaMovil
 }
 
 export const ModalRegistroMovil = ({
@@ -31,7 +31,7 @@ export const ModalRegistroMovil = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Formulario compartido */}
+        {/* Formulario compartido (le pasamos manejarExito a onGastoCreado que es lo que pide FormularioGasto) */}
         <div className="pt-2">
           <FormularioGasto onGastoCreado={manejarExito} />
         </div>
