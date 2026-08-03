@@ -3,7 +3,7 @@ import { crearGasto } from '../../lib/gastosService';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { PlusCircle, DollarSign, Tag, User, CreditCard, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, DollarSign, Tag, User, CreditCard } from 'lucide-react';
 
 interface FormularioGastoProps {
   onGastoCreado: () => void;
