@@ -4,7 +4,7 @@ import { actualizarGasto, eliminarGasto } from '../../lib/gastosService';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Search, History, Edit3, Trash2, X, Check } from 'lucide-react';
+import { Search, History, Edit3, Trash2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HistorialFiltrosProps {
   gastos: Gasto[];
@@ -16,6 +16,10 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
   const [filtroPagadoPor, setFiltroPagadoPor] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
+  
+  // Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 8; // Cantidad de gastos por página
 
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [descEdit, setDescEdit] = useState('');
@@ -59,6 +63,7 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
     }
   };
 
+  // Filtrado
   const gastosFiltrados = gastos.filter((g) => {
     const coincideCategoria = filtroCategoria === 'Todas' || g.categoria === filtroCategoria;
     const coincidePagadoPor = filtroPagadoPor === 'Todos' || g.pagado_por === filtroPagadoPor;
@@ -67,6 +72,12 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
     return coincideCategoria && coincidePagadoPor && coincideBusqueda;
   });
 
+  // Lógica de Paginación
+  const totalPaginas = Math.ceil(gastosFiltrados.length / elementosPorPagina) || 1;
+  const indiceUltimoGasto = paginaActual * elementosPorPagina;
+  const indicePrimerGasto = indiceUltimoGasto - elementosPorPagina;
+  const gastosPaginados = gastosFiltrados.slice(indicePrimerGasto, indiceUltimoGasto);
+
   return (
     <Card className="border-slate-800 shadow-xl relative">
       <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-800">
@@ -74,10 +85,10 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
           <div className="p-2 rounded-xl bg-slate-800 text-slate-300">
             <History className="w-5 h-5 text-purple-400" />
           </div>
-          <CardTitle className="text-base font-semibold">Historial de Movimientos</CardTitle>
+          <CardTitle className="text-base sm:text-lg font-semibold">Historial de Movimientos</CardTitle>
         </div>
-        <span className="text-xs text-purple-400 bg-purple-950/60 px-3 py-1 rounded-lg border border-purple-800/40 font-medium">
-          Mostrando {gastosFiltrados.length} de {gastos.length} gastos
+        <span className="text-xs sm:text-sm text-purple-400 bg-purple-950/60 px-3 py-1.5 rounded-lg border border-purple-800/40 font-medium">
+          Mostrando {gastosFiltrados.length} resultados
         </span>
       </CardHeader>
 
@@ -85,21 +96,21 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
         {/* Filtros */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
             <Input
               type="text"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
               placeholder="Buscar descripción..."
-              className="pl-9"
+              className="pl-9 text-sm sm:text-base py-2.5"
             />
           </div>
 
           <div className="relative">
             <select
               value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
+              onChange={(e) => { setFiltroCategoria(e.target.value); setPaginaActual(1); }}
+              className="flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm sm:text-base text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
             >
               <option value="Todas">Todas las categorías</option>
               <option value="Alimentación">Alimentación</option>
@@ -118,8 +129,8 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
           <div className="relative">
             <select
               value={filtroPagadoPor}
-              onChange={(e) => setFiltroPagadoPor(e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
+              onChange={(e) => { setFiltroPagadoPor(e.target.value); setPaginaActual(1); }}
+              className="flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm sm:text-base text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
             >
               <option value="Todos">Ambos (Jazmine y Marcos)</option>
               <option value="Jazmine">Jazmine</option>
@@ -130,46 +141,46 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
 
         {/* Lista de Movimientos */}
         {cargando ? (
-          <p className="text-sm text-slate-400 text-center py-8">Cargando base de datos...</p>
-        ) : gastosFiltrados.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-8">No se encontraron gastos con estos filtros.</p>
+          <p className="text-sm sm:text-base text-slate-400 text-center py-8">Cargando base de datos...</p>
+        ) : gastosPaginados.length === 0 ? (
+          <p className="text-sm sm:text-base text-slate-400 text-center py-8">No se encontraron gastos con estos filtros.</p>
         ) : (
-          <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 pt-1">
-            {gastosFiltrados.map((g) => (
-              <div key={g.id} className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 flex justify-between items-center text-sm hover:border-slate-700 transition-all">
-                <div className="space-y-1">
+          <div className="space-y-2.5 pt-1">
+            {gastosPaginados.map((g) => (
+              <div key={g.id} className="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 flex justify-between items-center text-sm sm:text-base hover:border-slate-700 transition-all">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-200">{g.descripcion}</p>
+                    <p className="font-semibold text-slate-100">{g.descripcion}</p>
                     {g.es_personal && (
-                      <span className="text-[9px] bg-amber-950/80 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800/60 font-medium">
+                      <span className="text-[10px] bg-amber-950/80 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800/60 font-medium">
                         Personal
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] bg-purple-950/80 text-purple-300 px-2 py-0.5 rounded-full border border-purple-800/40 font-medium">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs bg-purple-950/80 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-800/40 font-medium">
                       {g.categoria}
                     </span>
-                    <span className="text-[10px] text-slate-400">• {g.metodo_pago} • {g.fecha}</span>
+                    <span className="text-xs text-slate-400">• {g.metodo_pago} • {g.fecha}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="text-right">
-                    <p className="font-bold text-emerald-400 text-base">S/ {Number(g.monto).toFixed(2)}</p>
-                    <span className="text-[11px] text-slate-400 font-medium">Pagó: {g.pagado_por}</span>
+                    <p className="font-bold text-emerald-400 text-base sm:text-lg">S/ {Number(g.monto).toFixed(2)}</p>
+                    <span className="text-xs text-slate-400 font-medium">Pagó: {g.pagado_por}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => iniciarEdicion(g)}
-                      className="p-2 rounded-xl bg-slate-900 text-slate-300 hover:bg-purple-950/60 hover:text-purple-400 border border-slate-800 transition-all"
+                      className="p-2 sm:p-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-purple-950/60 hover:text-purple-400 border border-slate-800 transition-all"
                       title="Editar gasto"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => manejarEliminar(g.id)}
-                      className="p-2 rounded-xl bg-slate-900 text-red-400 hover:bg-red-950/60 border border-slate-800 transition-all"
+                      className="p-2 sm:p-2.5 rounded-xl bg-slate-900 text-red-400 hover:bg-red-950/60 border border-slate-800 transition-all"
                       title="Eliminar gasto"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -178,6 +189,33 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Controles de Paginación */}
+        {totalPaginas > 1 && (
+          <div className="flex justify-between items-center pt-3 border-t border-slate-800">
+            <Button
+              variant="outline"
+              onClick={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
+              disabled={paginaActual === 1}
+              className="flex items-center gap-1 text-xs sm:text-sm"
+            >
+              <ChevronLeft className="w-4 h-4" /> Anterior
+            </Button>
+            
+            <span className="text-xs sm:text-sm text-slate-400 font-medium">
+              Página <strong className="text-white">{paginaActual}</strong> de <strong className="text-white">{totalPaginas}</strong>
+            </span>
+
+            <Button
+              variant="outline"
+              onClick={() => setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))}
+              disabled={paginaActual === totalPaginas}
+              className="flex items-center gap-1 text-xs sm:text-sm"
+            >
+              Siguiente <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         )}
 
@@ -192,13 +230,13 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
                 <X className="w-5 h-5" />
               </button>
 
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-purple-400" /> Editar Gasto
               </h3>
 
               <form onSubmit={guardarEdicion} className="space-y-3">
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Descripción</label>
+                  <label className="text-xs sm:text-sm text-slate-400 block mb-1">Descripción</label>
                   <Input
                     type="text"
                     value={descEdit}
@@ -209,7 +247,7 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">Monto (S/)</label>
+                    <label className="text-xs sm:text-sm text-slate-400 block mb-1">Monto (S/)</label>
                     <Input
                       type="number"
                       step="0.01"
@@ -219,7 +257,7 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">Categoría</label>
+                    <label className="text-xs sm:text-sm text-slate-400 block mb-1">Categoría</label>
                     <select
                       value={catEdit}
                       onChange={(e) => setCatEdit(e.target.value)}
