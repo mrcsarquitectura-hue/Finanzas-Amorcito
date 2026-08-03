@@ -14,7 +14,6 @@ export const VistaMovil = ({ gastos, onGastoCreado }: VistaMovilProps) => {
   const gastosCompartidos = gastos.filter((g) => !g.es_personal);
   const totalHogar = gastosCompartidos.reduce((acc, g) => acc + Number(g.monto), 0);
   const totalJazmine = gastosCompartidos.filter((g) => g.pagado_por === 'Jazmine').reduce((acc, g) => acc + Number(g.monto), 0);
-  const totalMarcos = gastosCompartidos.filter((g) => g.pagado_por === 'Marcos').reduce((acc, g) => acc + Number(g.monto), 0);
 
   const mitadIdeal = totalHogar / 2;
   const diferenciaJazmine = totalJazmine - mitadIdeal;
