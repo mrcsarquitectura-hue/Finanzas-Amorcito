@@ -74,7 +74,7 @@ export const VistaMovil = ({ gastos, onGastoCreado }: VistaMovilProps) => {
       <ModalRegistroMovil
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
-        onGastoCreado={onGastoCreado}
+        onGastoAgregado={onGastoCreado}
       />
     </div>
   );
