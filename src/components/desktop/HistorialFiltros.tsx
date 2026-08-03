@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { Gasto } from '../../interfaces/gasto';
 import { actualizarGasto, eliminarGasto } from '../../lib/gastosService';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Search, History, Edit3, Trash2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, History, Edit3, Trash2, X, Check, ChevronLeft, ChevronRight, Calendar, ArrowUpDown } from 'lucide-react';
 
 interface HistorialFiltrosProps {
   gastos: Gasto[];
@@ -17,20 +17,25 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
   const [filtroPagadoPor, setFiltroPagadoPor] = useState('Todos');
   const [busqueda, setBusqueda] = useState('');
   
+  // Estado para alternar el orden (true = más reciente primero, false = más antiguo primero)
+  const [ordenRecientePrimero, setOrdenRecientePrimero] = useState(true);
+
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
-  const elementosPorPagina = 8; // Cantidad de gastos por página
+  const elementosPorPagina = 8;
 
   const [gastoEditando, setGastoEditando] = useState<Gasto | null>(null);
   const [descEdit, setDescEdit] = useState('');
   const [montoEdit, setMontoEdit] = useState('');
   const [catEdit, setCatEdit] = useState('');
+  const [fechaEdit, setFechaEdit] = useState('');
 
   const iniciarEdicion = (g: Gasto) => {
     setGastoEditando(g);
     setDescEdit(g.descripcion);
     setMontoEdit(String(g.monto));
     setCatEdit(g.categoria);
+    setFechaEdit(g.fecha || '');
   };
 
   const guardarEdicion = async (e: React.FormEvent) => {
@@ -42,6 +47,7 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
         descripcion: descEdit,
         monto: parseFloat(montoEdit),
         categoria: catEdit,
+        fecha: fechaEdit,
       });
       setGastoEditando(null);
       onGastoActualizado();
@@ -63,13 +69,33 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
     }
   };
 
-  // Filtrado
+  // Filtrado y Ordenamiento dinámico según el botón
   const gastosFiltrados = gastos.filter((g) => {
     const coincideCategoria = filtroCategoria === 'Todas' || g.categoria === filtroCategoria;
     const coincidePagadoPor = filtroPagadoPor === 'Todos' || g.pagado_por === filtroPagadoPor;
     const coincideBusqueda = g.descripcion.toLowerCase().includes(busqueda.toLowerCase());
 
     return coincideCategoria && coincidePagadoPor && coincideBusqueda;
+  }).sort((a, b) => {
+    let comparacion = 0;
+
+    // 1. Prioridad por hora exacta (created_at)
+    if (a.created_at && b.created_at) {
+      comparacion = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else {
+      // 2. Respaldo por fecha
+      const fechaA = new Date(a.fecha || '').getTime();
+      const fechaB = new Date(b.fecha || '').getTime();
+      if (fechaB !== fechaA) {
+        comparacion = fechaB - fechaA;
+      } else {
+        // 3. Respaldo por ID
+        comparacion = String(b.id || '').localeCompare(String(a.id || ''));
+      }
+    }
+
+    // Si el usuario quiere del más antiguo al primero, invertimos el resultado
+    return ordenRecientePrimero ? comparacion : -comparacion;
   });
 
   // Lógica de Paginación
@@ -87,9 +113,22 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
           </div>
           <CardTitle className="text-base sm:text-lg font-semibold">Historial de Movimientos</CardTitle>
         </div>
-        <span className="text-xs sm:text-sm text-purple-400 bg-purple-950/60 px-3 py-1.5 rounded-lg border border-purple-800/40 font-medium">
-          Mostrando {gastosFiltrados.length} resultados
-        </span>
+
+        <div className="flex items-center gap-2">
+          {/* Botón para alternar el orden */}
+          <button
+            onClick={() => setOrdenRecientePrimero(!ordenRecientePrimero)}
+            className="flex items-center gap-1.5 text-xs text-slate-300 bg-slate-950 hover:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 transition-all font-medium"
+            title="Cambiar orden de visualización"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5 text-purple-400" />
+            {ordenRecientePrimero ? 'Más reciente a antiguo' : 'Más antiguo a reciente'}
+          </button>
+
+          <span className="text-xs sm:text-sm text-purple-400 bg-purple-950/60 px-3 py-1.5 rounded-lg border border-purple-800/40 font-medium">
+            {gastosFiltrados.length} resultados
+          </span>
+        </div>
       </CardHeader>
 
       <CardContent className="pt-5 space-y-4">
@@ -235,6 +274,19 @@ export const HistorialFiltros = ({ gastos, cargando, onGastoActualizado }: Histo
               </h3>
 
               <form onSubmit={guardarEdicion} className="space-y-3">
+                <div>
+                  <label className="text-xs sm:text-sm text-slate-400 mb-1 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-blue-400" /> Fecha del Gasto
+                  </label>
+                  <Input
+                    type="date"
+                    value={fechaEdit}
+                    onChange={(e) => setFechaEdit(e.target.value)}
+                    required
+                    className="text-white bg-slate-950/80 border-slate-800"
+                  />
+                </div>
+
                 <div>
                   <label className="text-xs sm:text-sm text-slate-400 block mb-1">Descripción</label>
                   <Input

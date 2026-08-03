@@ -12,15 +12,20 @@ interface FormularioGastoProps {
 export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
   const [descripcion, setDescripcion] = useState('');
   const [monto, setMonto] = useState('');
-  const [categoria, setCategoria] = useState('Alimentación');
-  const [pagadoPor, setPagadoPor] = useState('Jazmine');
-  const [metodoPago, setMetodoPago] = useState('Yape');
+  // 1. Iniciamos los estados en vacío para obligar al usuario a elegir
+  const [categoria, setCategoria] = useState('');
+  const [pagadoPor, setPagadoPor] = useState('');
+  const [metodoPago, setMetodoPago] = useState('');
   const [esPersonal, setEsPersonal] = useState(false);
   const [cargando, setCargando] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!descripcion || !monto) return;
+    // 2. Validamos que se hayan seleccionado obligatoriamente
+    if (!descripcion || !monto || !categoria || !pagadoPor || !metodoPago) {
+      alert('Por favor completa todos los campos obligatorios.');
+      return;
+    }
 
     setCargando(true);
     try {
@@ -34,8 +39,13 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
         es_personal: esPersonal,
       });
 
+      // Limpiamos el formulario y restablecemos los selectores a vacío
       setDescripcion('');
       setMonto('');
+      setCategoria('');
+      setPagadoPor('');
+      setMetodoPago('');
+      setEsPersonal(false);
       onGastoCreado(); 
     } catch (error) {
       console.error(error);
@@ -95,9 +105,10 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
               <select
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
+                required
                 className="flex h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
               >
-                <option value="Todas">Todas las categorías</option>
+                <option value="" disabled>Seleccionar categoría...</option>
                 <option value="Alimentación">Alimentación</option>
                 <option value="Servicios">Servicios</option>
                 <option value="Alquiler">Alquiler</option>
@@ -120,8 +131,10 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
               <select
                 value={pagadoPor}
                 onChange={(e) => setPagadoPor(e.target.value)}
+                required
                 className="flex h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
               >
+                <option value="" disabled>¿Quién pagó?...</option>
                 <option value="Jazmine">Jazmine</option>
                 <option value="Marcos">Marcos</option>
               </select>
@@ -133,8 +146,10 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
               <select
                 value={metodoPago}
                 onChange={(e) => setMetodoPago(e.target.value)}
+                required
                 className="flex h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-all"
               >
+                <option value="" disabled>Seleccionar método...</option>
                 <option value="Yape">Yape</option>
                 <option value="Plin">Plin</option>
                 <option value="Efectivo">Efectivo</option>
@@ -149,7 +164,7 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
               type="checkbox"
               id="esPersonal"
               checked={esPersonal}
-              onChange={(e) => setEsPersonal(e.target.checked)}
+              onChange={(e) => setEsPersonal(e.target.value === 'true' || e.target.checked)}
               className="rounded bg-slate-950 border-slate-700 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
             />
             <label htmlFor="esPersonal" className="text-xs text-slate-300 cursor-pointer select-none">

@@ -1,70 +1,110 @@
 import type { Gasto } from '../../interfaces/gasto';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { BarChart3 } from 'lucide-react';
 
 interface GraficoCategoriasProps {
   gastos: Gasto[];
 }
 
+const COLORES_CATEGORIAS: { [key: string]: string } = {
+  Alimentación: '#f43f5e',
+  Servicios: '#06b6d4',
+  Alquiler: '#3b82f6',
+  Transporte: '#fbbf24',
+  Salud: '#10b981',
+  Ocio: '#a855f7',
+  Regalos: '#ec4899',
+  Gustos: '#6366f1',
+  Vacaciones: '#14b8a6',
+  Otros: '#64748b'
+};
+
 export const GraficoCategorias = ({ gastos }: GraficoCategoriasProps) => {
-  // 1. Filtrar solo gastos compartidos
-  const gastosCompartidos = gastos.filter((g) => !g.es_personal);
-  const totalHogar = gastosCompartidos.reduce((acc, g) => acc + Number(g.monto), 0);
+  const gastosCompartidos = gastos.filter((g) => !g.es_personal && g.categoria !== 'Todas');
 
-  // 2. Definir las categorías estándar
-  const categorias = ['Alimentación', 'Servicios', 'Alquiler', 'Transporte', 'Salud', 'Ocio', 'Otros'];
+  const totalesPorCategoria: { [key: string]: number } = {};
+  gastosCompartidos.forEach((g) => {
+    const cat = g.categoria || 'Otros';
+    if (!totalesPorCategoria[cat]) totalesPorCategoria[cat] = 0;
+    totalesPorCategoria[cat] += Number(g.monto);
+  });
 
-  // 3. Calcular el total gastado por cada categoría
-  const datosCategorias = categorias.map((cat) => {
-    const totalCat = gastosCompartidos
-      .filter((g) => g.categoria === cat)
-      .reduce((acc, g) => acc + Number(g.monto), 0);
-    
-    const porcentaje = totalHogar > 0 ? (totalCat / totalHogar) * 100 : 0;
-    return { categoria: cat, total: totalCat, porcentaje };
-  }).filter((item) => item.total > 0); // Solo mostrar categorías que tengan gastos
+  const totalGeneral = Object.values(totalesPorCategoria).reduce((acc, val) => acc + val, 0);
 
-  // Ordenar de mayor a menor gasto
-  datosCategorias.sort((a, b) => b.total - a.total);
+  const categoriasData = Object.entries(totalesPorCategoria)
+    .map(([categoria, monto]) => ({
+      categoria,
+      monto,
+      porcentaje: totalGeneral > 0 ? (monto / totalGeneral) * 100 : 0,
+      color: COLORES_CATEGORIAS[categoria] || '#a855f7'
+    }))
+    .sort((a, b) => b.monto - a.monto);
 
-  // Colores modernos para las barras
-  const colores = [
-    'from-purple-500 to-indigo-500',
-    'from-pink-500 to-rose-500',
-    'from-emerald-500 to-teal-500',
-    'from-amber-500 to-orange-500',
-    'from-cyan-500 to-blue-500',
-    'from-violet-500 to-purple-600',
-    'from-slate-500 to-zinc-600',
-  ];
+  const maxMontoCategoria = Math.max(...categoriasData.map((d) => d.monto), 50);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
-      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-        📊 Distribución de Gastos por Categoría
-      </h3>
-
-      {totalHogar === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6">No hay datos suficientes para mostrar el gráfico.</p>
-      ) : (
-        <div className="space-y-3 pt-1">
-          {datosCategorias.map((item, index) => (
-            <div key={item.categoria} className="space-y-1">
-              <div className="flex justify-between text-xs font-medium">
-                <span className="text-slate-200">{item.categoria}</span>
-                <span className="text-slate-400">
-                  S/ {item.total.toFixed(2)} <strong className="text-white">({item.porcentaje.toFixed(1)}%)</strong>
-                </span>
-              </div>
-              {/* Barra de progreso visual con degradado */}
-              <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                <div
-                  className={`h-full bg-gradient-to-r ${colores[index % colores.length]} transition-all duration-500 rounded-full`}
-                  style={{ width: `${item.porcentaje}%` }}
-                ></div>
-              </div>
-            </div>
-          ))}
+    <Card className="border-slate-800 shadow-xl w-full h-full flex flex-col justify-between">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <CardTitle className="text-base font-semibold">Distribución por Categoría</CardTitle>
         </div>
-      )}
-    </div>
+        <span className="text-xs bg-slate-950 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-800 font-medium">
+          Total: S/ {totalGeneral.toFixed(2)}
+        </span>
+      </CardHeader>
+
+      <CardContent className="pt-4 flex-1 flex flex-col justify-center my-auto">
+        {categoriasData.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-16">Sin gastos compartidos en este periodo.</p>
+        ) : (
+          <div className="space-y-4">
+            {/* Contenedor con menor espaciado (gap-4) para acercar las barras */}
+            <div className="relative h-48 w-full flex items-end justify-center gap-4 sm:gap-6 pt-6 px-4 border-b border-slate-800/80 pb-2">
+              {/* Líneas de referencia horizontales */}
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 py-4">
+                {[0, 0.5, 1].map((ratio, idx) => (
+                  <div key={idx} className="w-full border-b border-slate-800/40 text-[9px] text-slate-500 flex justify-end">
+                    <span>S/ {Math.round(maxMontoCategoria * (1 - ratio))}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Barras verticales más anchas (max-w-[44px]) */}
+              {categoriasData.map((item) => {
+                const alturaPorcentaje = Math.max((item.monto / maxMontoCategoria) * 100, 10);
+
+                return (
+                  <div key={item.categoria} className="relative flex flex-col items-center h-full justify-end group z-10 w-full max-w-[44px]">
+                    {/* Tooltip flotante */}
+                    <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-purple-500/50 text-[10px] text-white text-center rounded px-2 py-1 shadow-xl whitespace-nowrap z-30">
+                      <strong>{item.categoria}</strong>: <span className="text-emerald-400 font-bold">S/ {item.monto.toFixed(2)}</span> ({item.porcentaje.toFixed(0)}%)
+                    </div>
+
+                    {/* Barra vertical con efecto hover */}
+                    <div
+                      style={{ height: `${alturaPorcentaje}%`, backgroundColor: item.color }}
+                      className="w-full rounded-t-lg transition-all duration-300 group-hover:brightness-125 group-hover:shadow-[0_0_12px_rgba(168,85,247,0.4)] shadow-md"
+                    ></div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Etiquetas inferiores alineadas */}
+            <div className="flex justify-center gap-4 sm:gap-6 text-[10px] text-slate-300 font-medium px-4 overflow-x-auto pb-1">
+              {categoriasData.map((item) => (
+                <div key={item.categoria} className="flex flex-col items-center text-center shrink-0 w-12 sm:w-14">
+                  <span className="truncate w-full font-semibold" title={item.categoria}>{item.categoria}</span>
+                  <span className="text-[9px] text-emerald-400 font-bold">S/ {item.monto.toFixed(0)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

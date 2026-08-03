@@ -1,38 +1,21 @@
-import { useState } from 'react';
 import type { Gasto } from '../../interfaces/gasto';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import { Wallet, TrendingUp, HeartHandshake, Sparkles, Calendar, History } from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
+import { Wallet, TrendingUp, HeartHandshake, Sparkles } from 'lucide-react';
 
 interface ResumenFinancieroProps {
   gastos: Gasto[];
+  mesSeleccionadoGlobal: string;
 }
 
-export const ResumenFinanciero = ({ gastos }: ResumenFinancieroProps) => {
+export const ResumenFinanciero = ({ gastos, mesSeleccionadoGlobal }: ResumenFinancieroProps) => {
   const gastosCompartidos = gastos.filter((g) => !g.es_personal);
+  const mesSeleccionado = mesSeleccionadoGlobal;
 
-  // Obtener la lista de todos los meses disponibles en los registros (Ej: "2026-08", "2026-07")
-  const mesesDisponibles = Array.from(
-    new Set(gastosCompartidos.map((g) => (g.fecha ? g.fecha.substring(0, 7) : '')))
-  ).filter(Boolean).sort().reverse();
-
-  // Mes actual por defecto (YYYY-MM)
-  const mesActualStr = new Date().toISOString().substring(0, 7);
-  const [mesSeleccionado, setMesSeleccionado] = useState(
-    mesesDisponibles.includes(mesActualStr) ? mesActualStr : (mesesDisponibles[0] || mesActualStr)
-  );
-
-  // Filtrar gastos del mes seleccionado
   const gastosDelMes = gastosCompartidos.filter((g) => g.fecha && g.fecha.startsWith(mesSeleccionado));
 
   const totalHogar = gastosDelMes.reduce((acc, g) => acc + Number(g.monto), 0);
-
-  const totalJazmine = gastosDelMes
-    .filter((g) => g.pagado_por === 'Jazmine')
-    .reduce((acc, g) => acc + Number(g.monto), 0);
-
-  const totalMarcos = gastosDelMes
-    .filter((g) => g.pagado_por === 'Marcos')
-    .reduce((acc, g) => acc + Number(g.monto), 0);
+  const totalJazmine = gastosDelMes.filter((g) => g.pagado_por === 'Jazmine').reduce((acc, g) => acc + Number(g.monto), 0);
+  const totalMarcos = gastosDelMes.filter((g) => g.pagado_por === 'Marcos').reduce((acc, g) => acc + Number(g.monto), 0);
 
   const mitadIdeal = totalHogar / 2;
   const diferenciaJazmine = totalJazmine - mitadIdeal;
@@ -47,29 +30,6 @@ export const ResumenFinanciero = ({ gastos }: ResumenFinancieroProps) => {
 
   return (
     <div className="space-y-4 w-full">
-      {/* Selector de Mes */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-900/80 border border-slate-800 p-4 rounded-2xl gap-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-purple-400" />
-          <span className="text-xs font-semibold text-slate-200">Filtrar período mensual:</span>
-        </div>
-        <select
-          value={mesSeleccionado}
-          onChange={(e) => setMesSeleccionado(e.target.value)}
-          className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 font-medium"
-        >
-          {mesesDisponibles.length === 0 ? (
-            <option value={mesActualStr}>{mesActualStr}</option>
-          ) : (
-            mesesDisponibles.map((mes) => (
-              <option key={mes} value={mes}>
-                Mes: {mes} {mes === mesActualStr ? '(Actual)' : ''}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
-
       {/* Tarjetas de Resumen del Mes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-purple-950/60 relative overflow-hidden group hover:border-purple-800/60 transition-all">
@@ -135,38 +95,6 @@ export const ResumenFinanciero = ({ gastos }: ResumenFinancieroProps) => {
           </span>
         </div>
       </div>
-
-      {/* Historial de Balances de Meses Anteriores */}
-      {mesesDisponibles.length > 1 && (
-        <Card className="border-slate-800 shadow-xl">
-          <CardHeader className="pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-purple-400" />
-              <CardTitle className="text-sm font-semibold">Auditoría de Saldos de Meses Anteriores</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-3 space-y-2 max-h-[200px] overflow-y-auto">
-            {mesesDisponibles.map((mes) => {
-              const gastosM = gastosCompartidos.filter((g) => g.fecha && g.fecha.startsWith(mes));
-              const totM = gastosM.reduce((acc, g) => acc + Number(g.monto), 0);
-              const jazM = gastosM.filter((g) => g.pagado_por === 'Jazmine').reduce((acc, g) => acc + Number(g.monto), 0);
-              const mitadM = totM / 2;
-              const difM = jazM - mitadM;
-
-              let textoHistorial = 'Equilibrado';
-              if (difM > 0) textoHistorial = `Marcos debía S/ ${difM.toFixed(2)} a Jazmine`;
-              if (difM < 0) textoHistorial = `Jazmine debía S/ ${Math.abs(difM).toFixed(2)} a Marcos`;
-
-              return (
-                <div key={mes} className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                  <span className="font-semibold text-slate-300">Mes: {mes} (Total: S/ {totM.toFixed(2)})</span>
-                  <span className="text-purple-300 font-medium">{textoHistorial}</span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
