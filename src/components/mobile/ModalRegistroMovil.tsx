@@ -1,10 +1,11 @@
+import { useEffect } from 'react';
 import { FormularioGasto } from '../shared/FormularioGasto';
 import { X } from 'lucide-react';
 
 interface ModalRegistroMovilProps {
   isOpen: boolean;
   onClose: () => void;
-  onGastoAgregado: () => void; // <-- Mantenemos este nombre que usa VistaMovil
+  onGastoAgregado: () => void;
 }
 
 export const ModalRegistroMovil = ({
@@ -12,6 +13,18 @@ export const ModalRegistroMovil = ({
   onClose,
   onGastoAgregado,
 }: ModalRegistroMovilProps) => {
+  // Efecto para bloquear el scroll del fondo al abrir el modal en móviles
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const manejarExito = () => {
@@ -31,7 +44,7 @@ export const ModalRegistroMovil = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Formulario compartido (le pasamos manejarExito a onGastoCreado que es lo que pide FormularioGasto) */}
+        {/* Formulario compartido */}
         <div className="pt-2">
           <FormularioGasto onGastoCreado={manejarExito} />
         </div>
