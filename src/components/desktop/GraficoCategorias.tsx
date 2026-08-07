@@ -7,6 +7,7 @@ interface GraficoCategoriasProps {
 }
 
 const COLORES_CATEGORIAS: { [key: string]: string } = {
+  Hogar: '#8b5cf6',
   Alimentación: '#f43f5e',
   Servicios: '#06b6d4',
   Alquiler: '#3b82f6',
