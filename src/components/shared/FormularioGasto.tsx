@@ -113,6 +113,7 @@ export const FormularioGasto = ({ onGastoCreado }: FormularioGastoProps) => {
                 <option value="Servicios">Servicios</option>
                 <option value="Alquiler">Alquiler</option>
                 <option value="Transporte">Transporte</option>
+                <option value="Hogar">Hogar</option>
                 <option value="Salud">Salud</option>
                 <option value="Ocio">Ocio</option>
                 <option value="Regalos">Regalos</option>
